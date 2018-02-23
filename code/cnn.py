@@ -1,3 +1,5 @@
+import random
+
 import tensorflow as tf
 
 scene_to_num = {"学校": 11}
@@ -11,7 +13,7 @@ def load_data(file_name):
     """
     sentence_map = {}
     i = 0
-    with open(file_name, 'rb') as file:
+    with open(file_name, 'r', encoding='utf-8') as file:
         for line in file:
             sentence_map[i] = [word for word in line.split(' ')]
             i += 1
@@ -26,7 +28,7 @@ def get_word2vec_map(file_name):
     :return:
     """
     vec_map = {}
-    with open(file_name, 'rb') as file:
+    with open(file_name, 'r', encoding='utf-8') as file:
         for line in file:
             line_split = line.split(" ")
             word = line_split[0]
@@ -61,10 +63,10 @@ def get_one_scene_data(file_name):
     :return:
     """
     all_vec = []
-    label_vector = [0 for i in range(14)]
+    label_vector = [0 for i in range(15)]
     label_vector[scene_to_num[file_name]] = 1
-    sentence_map = load_data(file_name)
-    vec_map = get_word2vec_map("E:\场景\场景评论tag\学校")
+    sentence_map = load_data('D:\workshop_longyuan\data\场景\scene\场景评论tag\\'+file_name+'.txt')
+    vec_map = get_word2vec_map("D:\workshop_longyuan\data\场景\scene\原始数据\word2vec_ikaNoDic.txt")
     for key, value in sentence_map.items():
         all_vec[int(key)] = get_sentence_vec(value, vec_map, 2000, 200)
     return all_vec, label_vector
@@ -81,7 +83,17 @@ def get_train_data():
         all_data[key] = get_one_scene_data(key)
     return all_data
 
+
 def get_next_batch(data, data_num):
+    vec = data['学校'][0]
+    label = data['学校'][1]
+    x = []
+    y = [label for i in range(data_num)]
+    size = list(data['学校'][0]).__len__() - 1
+    for i in range(data_num):
+        index = random.randint(0, size)
+        x[i] = vec[index]
+    return x, y
 
 
 # 定义一个函数，用于初始化所有的权值 W
@@ -106,18 +118,18 @@ def max_pool(x):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 
-input_data = tf.placeholder(dtype=tf.float32, shape=[None, 100])
-label_data = tf.placeholder(dtype=tf.float32, shape=[None, 13])
+input_data = tf.placeholder(dtype=tf.float32, shape=[None, 2000*200])
+label_data = tf.placeholder(dtype=tf.float32, shape=[None, 14])
 drop_out_prob = tf.placeholder("float")
 
 # 构建网络
-x_word = tf.reshape(input_data, [-1, 28, 28, 1])  # 转换输入数据shape,以便于用于网络中
-W_conv1 = weight_variable([5, 5, 1, 32])
-b_conv1 = bias_variable([32])
-h_conv1 = tf.nn.relu(conv2d(input_data, W_conv1) + b_conv1)  # 第一个卷积层
+x_word = tf.reshape(input_data, [-1, 2000, 200, 1])  # 转换输入数据shape,以便于用于网络中
+W_conv1 = weight_variable([200, 5, 1, 600])
+b_conv1 = bias_variable([600])
+h_conv1 = tf.nn.relu(conv2d(x_word, W_conv1) + b_conv1)  # 第一个卷积层
 h_pool1 = max_pool(h_conv1)  # 第一个池化层
 
-W_conv2 = weight_variable([5, 5, 32, 64])
+W_conv2 = weight_variable([1, 3, 600, 64])
 b_conv2 = bias_variable([64])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)  # 第二个卷积层
 h_pool2 = max_pool(h_conv2)  # 第二个池化层
@@ -142,11 +154,11 @@ sess.run(tf.initialize_all_variables())
 
 data = get_train_data()
 for i in range(2000):
-    batch = mnist.train.next_batch(50)
+    batch = get_next_batch(data, 50)
     if i % 100 == 0:  # 训练100次，验证一次
         train_acc = accuracy.eval(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
         print('step', i, 'training accuracy', train_acc)
         train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
 
-test_acc = accuracy.eval(feed_dict={x: mnist.test.images, y_actual: mnist.test.labels, keep_prob: 1.0})
-print("test accuracy", test_acc)
+# test_acc = accuracy.eval(feed_dict={input_data: mnist.test.images, label_data: mnist.test.labels, drop_out_prob: 1.0})
+# print("test accuracy", test_acc)

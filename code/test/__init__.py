@@ -1,3 +1,5 @@
+import random
+
 import tensorflow as tf
 
 var = tf.Variable(tf.truncated_normal([5, 5], stddev=0.1))
@@ -13,3 +15,7 @@ print(a[1: 4])
 b = [[1, 2, 3], [4, 5, 6]]
 b[1] = a
 print(b)
+
+for i in range(3):
+    print(random.randint(0, 50))
+
