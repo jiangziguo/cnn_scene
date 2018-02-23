@@ -66,7 +66,7 @@ def get_sentence_vec(words, word_vec_map, vec_length, word2vec_dimension):
     return sentence_vec
 
 
-def get_one_scene_data(config, file_name):
+def get_one_scene_data(file_name):
     """
     获取训练数据
     :param config:
@@ -74,17 +74,16 @@ def get_one_scene_data(config, file_name):
     :return:
     """
     all_vec = []
-    label_vector = [0 for i in range(config.scene_num)]
+    label_vector = [0 for i in range(14)]
     label_vector[scene_to_num[file_name]] = 1
     sentence_map = load_data(file_name)
-    vec_map = get_word2vec_map(config.word2vec_file)
+    vec_map = get_word2vec_map("E:\场景\场景评论tag\学校")
     for key, value in sentence_map.items():
-        all_vec[int(key)] = get_sentence_vec(value, vec_map, config.sentence_vector_length,
-                                             config.word2vec_dimension)
+        all_vec[int(key)] = get_sentence_vec(value, vec_map, 2000, 200)
     return all_vec, label_vector
 
 
-def get_train_data(config):
+def get_train_data():
     """
     获取训练数据
     :param config:
@@ -92,5 +91,5 @@ def get_train_data(config):
     """
     all_data = {}
     for key in scene_to_num.keys():
-        all_data[key] = get_one_scene_data(config, key)
+        all_data[key] = get_one_scene_data(key)
     return all_data

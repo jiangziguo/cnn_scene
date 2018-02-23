@@ -1,5 +1,88 @@
 import tensorflow as tf
 
+scene_to_num = {"学校": 11}
+
+
+def load_data(file_name):
+    """
+    加载数据,并将分词后的句子转换为字典：key=自增整数序号，value=句子对应的词列表
+    :param file_name:
+    :return:
+    """
+    sentence_map = {}
+    i = 0
+    with open(file_name, 'rb') as file:
+        for line in file:
+            sentence_map[i] = [word for word in line.split(' ')]
+            i += 1
+    file.close()
+    return sentence_map
+
+
+def get_word2vec_map(file_name):
+    """
+    将词向量转换为Map,以方便创建句子对应的矩阵，key=词，value=词向量（1X200）
+    :param file_name:
+    :return:
+    """
+    vec_map = {}
+    with open(file_name, 'rb') as file:
+        for line in file:
+            line_split = line.split(" ")
+            word = line_split[0]
+            word_vec_list = [float(i) for i in line_split[1:line_split.__len__()]]
+            vec_map[word] = word_vec_list
+    file.close()
+    return vec_map
+
+
+def get_sentence_vec(words, word_vec_map, vec_length, word2vec_dimension):
+    """
+    将分词后的句子转换为长度为vec_length的矩阵，长度不够的，用零补全
+    :param words:
+    :param word_vec_map:
+    :param vec_length:
+    :param word2vec_dimension:
+    :return:
+    """
+    sentence_vec = [[0 for i in range(word2vec_dimension)] for i in range(vec_length)]
+    if vec_length < list(words).__len__():
+        return 'vec_length is too small'
+    for i in range(list(words).__len__()):
+        sentence_vec[i] = word_vec_map[words[i]]
+    return sentence_vec
+
+
+def get_one_scene_data(file_name):
+    """
+    获取训练数据
+    :param config:
+    :param file_name:
+    :return:
+    """
+    all_vec = []
+    label_vector = [0 for i in range(14)]
+    label_vector[scene_to_num[file_name]] = 1
+    sentence_map = load_data(file_name)
+    vec_map = get_word2vec_map("E:\场景\场景评论tag\学校")
+    for key, value in sentence_map.items():
+        all_vec[int(key)] = get_sentence_vec(value, vec_map, 2000, 200)
+    return all_vec, label_vector
+
+
+def get_train_data():
+    """
+    获取训练数据
+    :param config:
+    :return:
+    """
+    all_data = {}
+    for key in scene_to_num.keys():
+        all_data[key] = get_one_scene_data(key)
+    return all_data
+
+def get_next_batch(data, data_num):
+
 
 # 定义一个函数，用于初始化所有的权值 W
 def weight_variable(shape):
@@ -57,7 +140,8 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))  # 精确度计�
 sess = tf.InteractiveSession()
 sess.run(tf.initialize_all_variables())
 
-for i in range(20000):
+data = get_train_data()
+for i in range(2000):
     batch = mnist.train.next_batch(50)
     if i % 100 == 0:  # 训练100次，验证一次
         train_acc = accuracy.eval(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
