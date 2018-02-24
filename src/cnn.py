@@ -74,7 +74,7 @@ def get_one_scene_data(file_name):
     sentence_map = load_data('E:\场景\场景评论分词\\' + file_name + '.txt')
     vec_map = get_word2vec_map("D:\hifive\HanLP\data\\test\word2vec_ikaNoDic.txt")
     for key, value in sentence_map.items():
-        all_vec.append(get_sentence_vec(value, vec_map, 200, 200))
+        all_vec.append(get_sentence_vec(value, vec_map, 300, 200))
     return all_vec, label_vector
 
 
@@ -127,12 +127,12 @@ def max_pool(x):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 
-input_data = tf.placeholder(dtype=tf.float32, shape=[None, 200, 200])
+input_data = tf.placeholder(dtype=tf.float32, shape=[None, 300, 200])
 label_data = tf.placeholder(dtype=tf.float32, shape=[None, 14])
 drop_out_prob = tf.placeholder("float")
 
 # 构建网络
-x_word = tf.reshape(input_data, [-1, 200, 200, 1])  # 转换输入数据shape,以便于用于网络中
+x_word = tf.reshape(input_data, [-1, 300, 200, 1])  # 转换输入数据shape,以便于用于网络中
 W_conv1 = weight_variable([5, 200, 1, 60])
 b_conv1 = bias_variable([60])
 h_conv1 = tf.nn.relu(conv2d(x_word, W_conv1) + b_conv1)  # 第一个卷积层
@@ -143,9 +143,9 @@ b_conv2 = bias_variable([20])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)  # 第二个卷积层
 h_pool2 = max_pool(h_conv2)  # 第二个池化层
 
-W_fc1 = weight_variable([50 * 50 * 20, 1024])
+W_fc1 = weight_variable([75 * 50 * 20, 1024])
 b_fc1 = bias_variable([1024])
-h_pool2_flat = tf.reshape(h_pool2, [-1, 50 * 50 * 20])  # reshape成向量
+h_pool2_flat = tf.reshape(h_pool2, [-1, 75 * 50 * 20])  # reshape成向量
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)  # 第一个全连接层
 
 h_fc1_drop = tf.nn.dropout(h_fc1, drop_out_prob)  # dropout层
