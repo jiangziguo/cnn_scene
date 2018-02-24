@@ -15,7 +15,9 @@ def load_data(file_name):
     i = 0
     with open(file_name, 'r', encoding='utf-8') as file:
         for line in file:
-            sentence_map[i] = [word for word in line.split(' ')]
+            words = [word for word in line.split(' ')]
+            # 去掉最后的\n符号
+            sentence_map[i] = words[0:words.__len__()-1]
             i += 1
     file.close()
     return sentence_map
@@ -51,6 +53,9 @@ def get_sentence_vec(words, word_vec_map, vec_length, word2vec_dimension):
     if vec_length < list(words).__len__():
         return 'vec_length is too small'
     for i in range(list(words).__len__()):
+        if not word_vec_map.__contains__(words[i]):
+            sentence_vec[i] = [0 for i in range(word2vec_dimension)]
+            continue
         sentence_vec[i] = word_vec_map[words[i]]
     return sentence_vec
 
@@ -63,12 +68,12 @@ def get_one_scene_data(file_name):
     :return:
     """
     all_vec = []
-    label_vector = [0 for i in range(15)]
+    label_vector = [0 for i in range(14)]
     label_vector[scene_to_num[file_name]] = 1
-    sentence_map = load_data('D:\workshop_longyuan\data\场景\scene\场景评论tag\\'+file_name+'.txt')
-    vec_map = get_word2vec_map("D:\workshop_longyuan\data\场景\scene\原始数据\word2vec_ikaNoDic.txt")
+    sentence_map = load_data('E:\场景\场景评论分词\\'+file_name+'.txt')
+    vec_map = get_word2vec_map("D:\hifive\HanLP\data\\test\word2vec_ikaNoDic.txt")
     for key, value in sentence_map.items():
-        all_vec[int(key)] = get_sentence_vec(value, vec_map, 2000, 200)
+        all_vec.append(get_sentence_vec(value, vec_map, 2000, 200))
     return all_vec, label_vector
 
 
@@ -124,7 +129,7 @@ drop_out_prob = tf.placeholder("float")
 
 # 构建网络
 x_word = tf.reshape(input_data, [-1, 2000, 200, 1])  # 转换输入数据shape,以便于用于网络中
-W_conv1 = weight_variable([200, 5, 1, 600])
+W_conv1 = weight_variable([5, 200, 1, 600])
 b_conv1 = bias_variable([600])
 h_conv1 = tf.nn.relu(conv2d(x_word, W_conv1) + b_conv1)  # 第一个卷积层
 h_pool1 = max_pool(h_conv1)  # 第一个池化层
@@ -150,15 +155,16 @@ train_step = tf.train.GradientDescentOptimizer(1e-3).minimize(cross_entropy)  # 
 correct_prediction = tf.equal(tf.argmax(y_predict, 1), tf.argmax(label_data, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))  # 精确度计算
 sess = tf.InteractiveSession()
-sess.run(tf.initialize_all_variables())
+sess.run(tf.global_variables_initializer())
 
 data = get_train_data()
-for i in range(2000):
-    batch = get_next_batch(data, 50)
-    if i % 100 == 0:  # 训练100次，验证一次
+for i in range(200):
+    print("train time: "+i)
+    batch = get_next_batch(data, 10)
+    if i % 10 == 0:  # 训练100次，验证一次
         train_acc = accuracy.eval(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
         print('step', i, 'training accuracy', train_acc)
-        train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
+    train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
 
 # test_acc = accuracy.eval(feed_dict={input_data: mnist.test.images, label_data: mnist.test.labels, drop_out_prob: 1.0})
 # print("test accuracy", test_acc)
