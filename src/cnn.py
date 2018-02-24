@@ -1,5 +1,6 @@
 import random
 
+import os
 import tensorflow as tf
 
 scene_to_num = {"学校": 11}
@@ -17,7 +18,7 @@ def load_data(file_name):
         for line in file:
             words = [word for word in line.split(' ')]
             # 去掉最后的\n符号
-            sentence_map[i] = words[0:words.__len__()-1]
+            sentence_map[i] = words[0:words.__len__() - 1]
             i += 1
     file.close()
     return sentence_map
@@ -70,10 +71,10 @@ def get_one_scene_data(file_name):
     all_vec = []
     label_vector = [0 for i in range(14)]
     label_vector[scene_to_num[file_name]] = 1
-    sentence_map = load_data('E:\场景\场景评论分词\\'+file_name+'.txt')
+    sentence_map = load_data('E:\场景\场景评论分词\\' + file_name + '.txt')
     vec_map = get_word2vec_map("D:\hifive\HanLP\data\\test\word2vec_ikaNoDic.txt")
     for key, value in sentence_map.items():
-        all_vec.append(get_sentence_vec(value, vec_map, 2000, 200))
+        all_vec.append(get_sentence_vec(value, vec_map, 200, 200))
     return all_vec, label_vector
 
 
@@ -97,7 +98,10 @@ def get_next_batch(data, data_num):
     size = list(data['学校'][0]).__len__() - 1
     for i in range(data_num):
         index = random.randint(0, size)
-        x[i] = vec[index]
+        try:
+            x.append(vec[index])
+        except Exception as error:
+            print(index)
     return x, y
 
 
@@ -123,25 +127,25 @@ def max_pool(x):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 
-input_data = tf.placeholder(dtype=tf.float32, shape=[None, 2000*200])
+input_data = tf.placeholder(dtype=tf.float32, shape=[None, 200, 200])
 label_data = tf.placeholder(dtype=tf.float32, shape=[None, 14])
 drop_out_prob = tf.placeholder("float")
 
 # 构建网络
-x_word = tf.reshape(input_data, [-1, 2000, 200, 1])  # 转换输入数据shape,以便于用于网络中
-W_conv1 = weight_variable([5, 200, 1, 600])
-b_conv1 = bias_variable([600])
+x_word = tf.reshape(input_data, [-1, 200, 200, 1])  # 转换输入数据shape,以便于用于网络中
+W_conv1 = weight_variable([5, 200, 1, 60])
+b_conv1 = bias_variable([60])
 h_conv1 = tf.nn.relu(conv2d(x_word, W_conv1) + b_conv1)  # 第一个卷积层
 h_pool1 = max_pool(h_conv1)  # 第一个池化层
 
-W_conv2 = weight_variable([1, 3, 600, 64])
-b_conv2 = bias_variable([64])
+W_conv2 = weight_variable([3, 1, 60, 20])
+b_conv2 = bias_variable([20])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)  # 第二个卷积层
 h_pool2 = max_pool(h_conv2)  # 第二个池化层
 
-W_fc1 = weight_variable([7 * 7 * 64, 1024])
+W_fc1 = weight_variable([50 * 50 * 20, 1024])
 b_fc1 = bias_variable([1024])
-h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])  # reshape成向量
+h_pool2_flat = tf.reshape(h_pool2, [-1, 50 * 50 * 20])  # reshape成向量
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)  # 第一个全连接层
 
 h_fc1_drop = tf.nn.dropout(h_fc1, drop_out_prob)  # dropout层
@@ -150,7 +154,7 @@ W_fc2 = weight_variable([1024, 14])
 b_fc2 = bias_variable([14])
 y_predict = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)  # softmax层
 
-cross_entropy = -tf.reduce_sum(label_data * tf.log(y_predict))  # 交叉熵
+cross_entropy = -tf.reduce_sum(label_data * tf.log(tf.clip_by_value(y_predict, 1e-10, 1.0)))  # 交叉熵
 train_step = tf.train.GradientDescentOptimizer(1e-3).minimize(cross_entropy)  # 梯度下降法
 correct_prediction = tf.equal(tf.argmax(y_predict, 1), tf.argmax(label_data, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))  # 精确度计算
@@ -158,13 +162,17 @@ sess = tf.InteractiveSession()
 sess.run(tf.global_variables_initializer())
 
 data = get_train_data()
-for i in range(200):
-    print("train time: "+i)
+print("data load success.")
+for i in range(1, 100):
+    print("train time: " + str(i))
     batch = get_next_batch(data, 10)
-    if i % 10 == 0:  # 训练100次，验证一次
+    if i % 5 == 0:  # 训练100次，验证一次
         train_acc = accuracy.eval(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
         print('step', i, 'training accuracy', train_acc)
-    train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
+    try:
+        train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
+    except Exception as error:
+        print(input_data)
 
 # test_acc = accuracy.eval(feed_dict={input_data: mnist.test.images, label_data: mnist.test.labels, drop_out_prob: 1.0})
 # print("test accuracy", test_acc)

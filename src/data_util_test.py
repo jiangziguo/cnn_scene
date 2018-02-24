@@ -73,14 +73,14 @@ def get_one_scene_data(file_name):
     :param file_name:
     :return:
     """
-    all_vec = []
+    sentence_vec = []
     label_vector = [0 for i in range(14)]
     label_vector[scene_to_num[file_name]] = 1
     sentence_map = load_data(file_name)
     vec_map = get_word2vec_map("E:\场景\场景评论tag\学校")
     for key, value in sentence_map.items():
-        all_vec[int(key)] = get_sentence_vec(value, vec_map, 2000, 200)
-    return all_vec, label_vector
+        sentence_vec[int(key)] = get_sentence_vec(value, vec_map, 2000, 200)
+    return sentence_vec, label_vector
 
 
 def get_train_data():
