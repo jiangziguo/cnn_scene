@@ -90,7 +90,7 @@ def get_one_scene_data(item, vec_map, scene_bath_size):
     label_vector[item[0]] = 1
     sentence_map = load_data('E:\场景\场景评论分词dic\\' + item[1] + '.txt', scene_bath_size)
     for sentence in sentence_map:
-        all_vec.append(get_sentence_vec(sentence, vec_map, 60, 200))
+        all_vec.append(get_sentence_vec(sentence, vec_map, 100, 200))
     return all_vec, label_vector
 
 
@@ -179,12 +179,12 @@ def max_pool(x, colum):
     return tf.nn.max_pool(x, ksize=[1, colum, 1, 1], strides=[1, 1, 1, 1], padding='VALID')
 
 
-input_data = tf.placeholder(dtype=tf.float32, shape=[None, 60, 200])
+input_data = tf.placeholder(dtype=tf.float32, shape=[None, 100, 200])
 label_data = tf.placeholder(dtype=tf.float32, shape=[None, 14])
 drop_out_prob = tf.placeholder("float")
 
 # 构建网络
-x_word = tf.reshape(input_data, [-1, 60, 200, 1])  # 转换输入数据shape,以便于用于网络中
+x_word = tf.reshape(input_data, [-1, 100, 200, 1])  # 转换输入数据shape,以便于用于网络中
 W_conv1 = weight_variable([3, 200, 1, 100])
 b_conv1 = bias_variable([100])
 h_conv1 = tf.nn.relu(conv2d(x_word, W_conv1) + b_conv1)  # 第一个卷积层
