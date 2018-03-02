@@ -4,14 +4,14 @@ from src.model import Model
 
 flags = tf.flags
 
-flags.DEFINE_string("mode", "train", "启动模式 train/debug/test")
+flags.DEFINE_string("mode", "test", "启动模式 train/debug/test")
 
 train_data_dir = "E:\scene\\train\\k1\\"
-test_data_dir = "E:\scene\\test\\"
+test_data_dir = "E:\scene\\test\\k5\\"
 word2vec_data_dir = "D:\hifive\HanLP\data\\test\word2vec_ikaNoDic.txt"
-model_save_dir = "E:\scene\model\k1"
+model_save_dir = "E:\scene\model\k5"
 train_log_dir = "E:\scene\log\\train\k1"
-test_log_dir = "E:\scene\log\\test"
+test_log_dir = "E:\scene\log\\test\k5"
 
 flags.DEFINE_string("train_data_dir", train_data_dir, "训练数据文件目录")
 flags.DEFINE_string("test_data_dir", test_data_dir, "测试数据文件目录")
@@ -29,7 +29,7 @@ flags.DEFINE_integer("batch_size", 140, "数据分批大小")
 flags.DEFINE_integer("train_keep_prob", 0.5, "训练时保留概率")
 flags.DEFINE_integer("accuracy_keep_prob", 1.0, "验证时保留概率")
 flags.DEFINE_integer("word2vec_dimension", 200, "词向量维度")
-flags.DEFINE_integer("sentence_length", 80, "句子长度")
+flags.DEFINE_integer("sentence_length", 100, "句子长度")
 flags.DEFINE_integer("filter_output_channel", 100, "卷积输出通道大小")
 flags.DEFINE_integer("filter_height_1", 3, "第1个卷机器的高度")
 flags.DEFINE_integer("filter_height_2", 4, "第2个卷机器的高度")

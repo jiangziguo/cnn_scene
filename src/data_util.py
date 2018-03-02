@@ -119,3 +119,31 @@ def get_batch_data(config, word2vec_map):
             vec.append(x)
             label.append(scene_vec[1])
     return vec, label
+
+
+def get_scene_data_size(file_name):
+    """
+    获取测试数据数量
+    :param file_name:
+    :return:
+    """
+    total_num = 0
+    with open(file_name, 'r', encoding='utf-8') as file:
+        for line in file:
+            total_num += 1
+    file.close()
+    return total_num
+
+
+def get_test_data(config, word2vec_map, item):
+    """
+    获取场景的测试数据
+    :param config:
+    :param word2vec_map:
+    :param item: 场景
+    :return:
+    """
+    sentence_batch_size = get_scene_data_size(config.test_data_dir + item[1] + '.txt')
+    all_sentence_vector, label_vec = get_one_scene_data(item, word2vec_map, sentence_batch_size, config)
+    all_label_vector = [label_vec for i in range(sentence_batch_size)]
+    return all_sentence_vector, all_label_vector

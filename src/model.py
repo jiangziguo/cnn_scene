@@ -213,17 +213,35 @@ class Model(object):
         merged = tf.summary.merge_all()
         word2vec_map = data_util.get_word2vec_map(config.word2vec_data_dir)
 
+        # with tf.Session() as sess:
+        #     writer = tf.summary.FileWriter(config.test_log_dir, sess.graph)
+        #     sess.run(tf.global_variables_initializer())
+        #     saver = tf.train.Saver()
+        #     saver.restore(sess, tf.train.latest_checkpoint(config.model_save_dir))
+        #     for i in range(1, config.test_step):
+        #         batch = data_util.get_batch_data(config, word2vec_map)
+        #         eval_accuracy = accuracy.eval(
+        #             feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
+        #         accuracy_sum = tf.Summary(
+        #             value=[tf.Summary.Value(tag="model/accuracy", simple_value=eval_accuracy), ])
+        #         print('step', i, 'test accuracy', eval_accuracy)
+        #         writer.add_summary(accuracy_sum)
+        #         writer.flush()
+
         with tf.Session() as sess:
             writer = tf.summary.FileWriter(config.test_log_dir, sess.graph)
             sess.run(tf.global_variables_initializer())
             saver = tf.train.Saver()
             saver.restore(sess, tf.train.latest_checkpoint(config.model_save_dir))
-            for i in range(1, config.test_step):
-                batch = data_util.get_batch_data(config, word2vec_map)
+            all_accuracy_sum = 0.0
+            for item in data_util.scene_to_num.items():
+                x, y = data_util.get_test_data(config, word2vec_map, item)
                 eval_accuracy = accuracy.eval(
-                    feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
+                    feed_dict={input_data: x, label_data: y, drop_out_prob: 1.0})
                 accuracy_sum = tf.Summary(
                     value=[tf.Summary.Value(tag="model/accuracy", simple_value=eval_accuracy), ])
-                print('step', i, 'test accuracy', eval_accuracy)
+                all_accuracy_sum += eval_accuracy
+                print('scene', item[1], 'test accuracy: ', eval_accuracy)
                 writer.add_summary(accuracy_sum)
                 writer.flush()
+            print('all accuracy', all_accuracy_sum/14)
