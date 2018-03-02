@@ -117,15 +117,21 @@ class Model(object):
             for i in range(1, config.train_step):
                 batch = data_util.get_batch_data(config, word2vec_map)
                 if i % config.accuracy_step == 0:
-                    eval_accuracy = accuracy.eval(
-                        feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
-                    accuracy_sum = tf.Summary(
-                        value=[tf.Summary.Value(tag="model/accuracy", simple_value=eval_accuracy), ])
-                    print('step', i, 'training accuracy', eval_accuracy)
-                    writer.add_summary(accuracy_sum)
+                    # eval_accuracy = accuracy.eval(
+                    #     feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
+                    merge_summary, eval_accuracy = sess.run([merged, accuracy], feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 1.0})
+                    # accuracy_sum = tf.Summary(
+                    #     value=[tf.Summary.Value(tag="model/accuracy", simple_value=eval_accuracy), ])
+                    # print('step', i, 'training accuracy', eval_accuracy)
+                    writer.add_summary(merge_summary, global_step=i)
                     writer.flush()
                     continue
-                train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
+                # train_step.run(feed_dict={input_data: batch[0], label_data: batch[1], drop_out_prob: 0.5})
+                merge_summary, train_accuracy = sess.run([merged, train_step],
+                                                        feed_dict={input_data: batch[0], label_data: batch[1],
+                                                                   drop_out_prob: 0.5})
+                writer.add_summary(merge_summary, global_step=i)
+                writer.flush()
                 model_file_name = os.path.join(config.model_save_dir, "model.ckpt")
                 saver.save(sess, model_file_name)
 

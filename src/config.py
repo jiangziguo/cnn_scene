@@ -4,12 +4,12 @@ from src.model import Model
 
 flags = tf.flags
 
-flags.DEFINE_string("mode", "test", "启动模式 train/debug/test")
+flags.DEFINE_string("mode", "train", "启动模式 train/debug/test")
 
 train_data_dir = "E:\scene\\train\\k1\\"
 test_data_dir = "E:\scene\\test\\k5\\"
 word2vec_data_dir = "D:\hifive\HanLP\data\\test\word2vec_ikaNoDic.txt"
-model_save_dir = "E:\scene\model\k5"
+model_save_dir = "E:\scene\model\k1"
 train_log_dir = "E:\scene\log\\train\k1"
 test_log_dir = "E:\scene\log\\test\k5"
 
